@@ -1,0 +1,13 @@
+#
+# Trails Environment Definitions
+#
+TRLS_DEVELOPER=richard_david_conover
+TRLS_DEVELOPER_EMAIL=conover@udel.edu
+TRLS_ENV_FILE=/etc/environment
+TRLS_ENV_VERSION=161130A
+TRLS_FTP_ROOT=/home/richard/trails/db/junk/ftp
+TRLS_DBF_ROOT=/home/richard/trails/db/junk/ftp/db
+TRLS_SYNC_TXT=1
+#TRLS_SYNC_ZIP=1
+TRLS_NOISY=12
+#################################################
