@@ -33,6 +33,7 @@ InFile=`basename ${InPath}`
 
 # Location of the DB_ROOT where the file is to be placed
 OutDbRoot=$2
+OutDbErrors=${OutDbRoot}/FileErrors
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -43,20 +44,49 @@ ThisMonth=`echo ${DateToday} | cut -d_ -f1`
 ThisDay=`echo ${DateToday} | cut -d_ -f2`
 ThisYear=`echo ${DateToday} | cut -d_ -f3`
 YearStamp=${ThisYear}
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ThisMonthDay="${ThisMonth}${ThisDay}"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #Get the GPS Serial Number  field from the GPS file
 GpsSerialNum=`echo ${InFile} | cut -d_ -f1`
 echo "GPS Serial Number = ${GpsSerialNum}"
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Now we validate the filaname
+FileNameError=0
+
+Count_=`echo ${InFile} | grep -o "\_" | wc -l`
+if [ ${Count_} -ne 3 ] 
+then
+  FileNameError=1
+fi
+
+
+FileValidName=`echo ${InFile} | cut -d. -f1|cut -d_ -f2` 
+re='^[0-9]+$'
+if ! [[ ${FileValidName} =~ $re ]] ; then
+   echo ${FileValidName}
+   echo "error: Not a number"
+   FileNameError=2
+fi
+
+
+if [ $FileNameError -gt 0 ]
+then
+   mkdir -p -m 700 -Z ${OutDbErrors}
+   mv ${InPath} ${OutDbErrors}
+   #sleep 2
+   exit ${FileNameError};
+fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #Get the MonthDay field from the GPS file
 FileMonthDay=`echo ${InFile} | cut -d. -f1|cut -d_ -f2`
 echo "FileMonthDay = ${FileMonthDay}"
+
 
 #Check for a 'Time Wrap' where GPS is later than the current time
 if [ ${FileMonthDay} -gt ${ThisMonthDay} ]

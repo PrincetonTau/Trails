@@ -8,6 +8,9 @@ ProgramName="dbSyncFiles_1x0.sh"
 # Richard David Conover
 #  11/30/2016
 
+BINDIR=${TRLS_BINDIR}
+SHL_PATH="${BINDIR}/shell"
+
 # Environment has the path to the source files and database 
 # All of the input files are in the path - ${TRLS_FTP_ROOT}
 TrailsGpsSrcFiles=${TRLS_FTP_ROOT}
@@ -41,22 +44,16 @@ Ret=9
 # - - - - - - - - - - - - - - - - - - - - - - - -
 MyInputZipFiles=`ls ${TrailsGpsSrcFiles}/*.zip`
 
-if [ ${TRLS_SYNC_TXT} = 1 ]
+if [ ${TRLS_SYNC_TXT} ]
 then
 MyInputFiles=`ls ${TrailsGpsSrcFiles}/*.txt`
 fi
 
-if [ ${TRLS_SYNC_ZIP} = 1 ]
+
+if [ ${TRLS_SYNC_ZIP} ]
 then
 MyInputFiles+=`ls ${TrailsGpsSrcFiles}/*.zip`
 fi
-
-
-
-
-
-
-
 
 
 
@@ -64,7 +61,9 @@ fi
 
 for f in ${MyInputFiles}
 do
-  echo "Processing $f..."
+  echo "Processing ${f}..."
+  ${SHL_PATH}/mvFile2Folder_1x1b.sh ${f} ${TrailsDbRoot}
+  
   # take action on each file. $f store current file name
   # echo $f
 done
