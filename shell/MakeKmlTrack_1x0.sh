@@ -1,0 +1,163 @@
+#!/bin/bash
+
+ProgramName="cpFile2Folder_1x0.sh"
+
+# Richard David Conover
+#  12/26/2016
+
+
+
+# Copy a set of GPS files, selected by the GPS device serial-number
+# from the source folder to the desination folder, as specified on the command
+# line. 
+
+# Rule 1: If the GPS files have the same 'TimeStamp': use the larger.
+# Rule 2: If the Current Month is less that GPS month, adjust the Year-TimeStamp
+# Rule 3: Only copy files that are within the TimeWindow
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+if [ ${#} -ne 5 ]
+then  
+  echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+  echo "Incorrect argument list"
+  echo "Example: ${ProgramName} GpsSrcFilePath GpsDestFilePath GPS_Serial S_YYMMDDHH E_YYMMDDHH"
+  echo "         GPS_Serial = GPS Device Serial Number"
+  echo "         S_YYMMDDHR = Start Year Month Day Hour (S_16110906) 2016-Nov-09-06a"
+  echo "         E_YYMMDDHR =   End Year Month Day Hour (E_16123123) 2016-Dec-09-11p"
+  echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+  exit 9
+fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BeNoisy=${TRLS_NOISY}
+BeNoisy=0
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Capture the input data parameters
+GpsSrcFilePath=${1}
+GpsDestFilePath=${2}
+GPS_Serial=${3}
+S_YYMMDDHH=${4} 
+E_YYMMDDHH=${5}
+FilesCopies=0
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+mkdir -p ${GpsDestFilePath}
+MyStatus=$?
+if [ ${MyStatus} -ne "0" ]
+then
+    echo "Error Creating Directoy"
+    exit 151
+fi
+
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+if [ ${TRLS_SYNC_TXT} ]
+then
+MyInputFiles=`ls ${GpsSrcFilePath}/*.txt`
+fi
+
+if [ ${TRLS_SYNC_ZIP} ]
+then
+MyInputFiles+=`ls ${GpsSrcFilePath}/*.zip`
+fi
+
+
+if [ ${BeNoisy} -ne 0 ]
+then
+  echo ${MyInputFiles}
+fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Get the current "Clock Time" of the server
+DateToday=`date +%m_%d_%y`
+ThisMonth=`echo ${DateToday} | cut -d_ -f1`
+ThisDay=`echo ${DateToday} | cut -d_ -f2`
+ThisYear=`echo ${DateToday} | cut -d_ -f3`
+LastYear=${ThisYear}
+YearStamp=${ThisYear}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Since the GPS files don't have a year-stamp based on assumptions.
+# The current Geo-Database retains "current data" for less that 6-Months.
+# Sorted data is a directories that are 'year organized sections'. So The
+# ambiguity only exists the short term sorting. This is resolved by the 
+# Last-Year This-Year construct.
+if [[ ${ThisMonth} < "07" ]]
+then
+  LastYear=$((ThisYear-1))
+fi
+
+if [ ${BeNoisy} -ne 0 ]
+then
+  echo ${ThisYear}
+  echo ${LastYear}
+fi
+
+ThisMonthDay="${ThisMonth}${ThisDay}"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+#echo ${MyInputFiles}
+
+for f in ${MyInputFiles}
+do
+  TheFile=`basename ${f}`
+  GpsSerialNum=`echo ${TheFile} | cut -d_ -f1`
+ 
+ # echo "${GpsSerialNum} ... ${GPS_Serial}"
+ 
+ if [ ${GPS_Serial} = ${GpsSerialNum} ]
+ then
+    #echo "This YMDH" = ${ThisMonthDay}
+    #echo "Processing ${TheFile} [...]"
+#    echo "GPS Serial Number = ${GpsSerialNum}"
+    
+    #Get the MonthDay field from the GPS file
+    FileMonthDay=`echo ${TheFile} | cut -d. -f1|cut -d_ -f2`
+    FileHour=`echo ${TheFile} | cut -d. -f1|cut -d_ -f4`
+#    echo "FileMonthDay = ${FileMonthDay}"
+    
+    if [[ ${FileMonthDay} < "0700" ]]
+    then 
+        FileYearMonthDay="${ThisYear}${FileMonthDay}"
+    else
+        FileYearMonthDay="${LastYear}${FileMonthDay}"
+    fi
+    
+    FileTimeStamp="${FileYearMonthDay}${FileHour}"
+#   echo "FileTimeStamp = ${FileTimeStamp} ${S_YYMMDDHH} ... ${E_YYMMDDHH}"
+    
+    if [[ ${FileTimeStamp} -ge ${S_YYMMDDHH} ]]
+    then
+      if [[ ${FileTimeStamp} -le ${E_YYMMDDHH} ]]
+      then
+	  cp $f ${GpsDestFilePath}
+#	  echo "Accepted File ==================================================="
+      fi
+    fi
+    
+    
+      #exit 9  
+  fi
+  
+  
+#  ${SHL_PATH}/mvFile2Folder_1x1b.sh ${f} ${TrailsDbRoot}
+  
+  # take action on each file. $f store current file name
+  # echo $f
+done
+
+
+
+
+
+
+exit 0
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
