@@ -66,7 +66,36 @@ DB_FileDirectory="${GpsSrcFilePath}/0${SN_Hash_Use}"
 echo "DB_FileDirectory = ${DB_FileDirectory}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-ls ${DB_FileDirectory}
+#Flist=`find ${DB_FileDirectory} |grep ".txt"`
+
+DirList=`ls -d ${DB_FileDirectory}/*`
+
+for DirName in `echo ${DirList}|sort`; 
+do 
+  echo $DirName
+  DayList=`ls ${DirName}|sort`
+  echo ${DayList}
+  
+  for GpsFile in ${DayList};
+  do
+    echo ${GpsFile}
+  done
+  
+  
+  
+  
+  sleep 2
+
+  
+  
+  
+  
+done
+
+
+#echo ${Flist}
+
+
 
 
 
