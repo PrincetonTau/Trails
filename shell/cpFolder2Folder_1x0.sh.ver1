@@ -1,13 +1,11 @@
 #!/bin/bash
 
-ProgramName="MakeKmlTrack_1x0.sh"
+ProgramName="cpFile2Folder_1x0.sh"
 
 # Richard David Conover
-#  12/29/2016
+#  12/26/2016
 
-# This program will create a KML track of a specified GPS device
-# based on a start time and end-time based on the tracks recorded
-# in the GPS database for the device.
+
 
 # Copy a set of GPS files, selected by the GPS device serial-number
 # from the source folder to the desination folder, as specified on the command
@@ -16,6 +14,7 @@ ProgramName="MakeKmlTrack_1x0.sh"
 # Rule 1: If the GPS files have the same 'TimeStamp': use the larger.
 # Rule 2: If the Current Month is less that GPS month, adjust the Year-TimeStamp
 # Rule 3: Only copy files that are within the TimeWindow
+# Rule 4: 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if [ ${#} -ne 5 ]
@@ -30,63 +29,34 @@ then
   exit 9
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BeNoisy=${TRLS_NOISY}
-BeNoisy=0
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Capture the input data parameters
+# Capture the input data sets
 GpsSrcFilePath=${1}
 GpsDestFilePath=${2}
-GpsSerialNum=${3}
+GPS_Serial=${3}
 S_YYMMDDHH=${4} 
 E_YYMMDDHH=${5}
-FilesCopies=0
-SN_Hash=0
-DB_BaseDir=""
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Code to calculate the SerialPath for this entry
-echo ${GpsSerialNum}
-
-#SN_Hash=`echo -n "${GpsSerial}"|md5sum`
-SN_Hash=`echo -n "${GpsSerialNum}"|md5sum`
-#echo "SN_Hash = ${SN_Hash}"
-
-SN_Hash_MS8=`echo ${SN_Hash} | cut -c 5-12`
-echo "SN_Hash_MS8 = ${SN_Hash_MS8}"
-SN_Hash_Use=`echo ${SN_Hash_MS8} | cut -c 7`
-
-echo "SN_Hash_Use = ~${SN_Hash_Use}~"
-
-DB_FileDirectory=`echo "0${SN_Hash_Use}"`
-
-DB_FileDirectory="${GpsSrcFilePath}/0${SN_Hash_Use}"
-echo "DB_FileDirectory = ${DB_FileDirectory}"
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-ls ${DB_FileDirectory}
-
-
-
-
-
-
-exit 9
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-mkdir -p ${GpsDestFilePath}
-MyStatus=$?
-if [ ${MyStatus} -ne "0" ]
+if [ ${TRLS_SYNC_TXT} ]
 then
-    echo "Error Creating Directoy"
-    exit 151
+MyInputFiles=`ls ${GpsSrcFilePath}/*.txt`
+fi
+
+if [ ${TRLS_SYNC_ZIP} ]
+then
+MyInputFiles+=`ls ${GpsSrcFilePath}/*.zip`
 fi
 
 
-
+if [ ${TRLS_NOISY} = 99 ]
+then
+echo ${MyInputFiles}
+fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Get the current "Clock Time" of the server
@@ -96,7 +66,6 @@ ThisDay=`echo ${DateToday} | cut -d_ -f2`
 ThisYear=`echo ${DateToday} | cut -d_ -f3`
 LastYear=${ThisYear}
 YearStamp=${ThisYear}
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 
@@ -104,17 +73,6 @@ YearStamp=${ThisYear}
 
 
 
-
-
-
-
-
-
-
-
-`
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Since the GPS files don't have a year-stamp based on assumptions.
 # The current Geo-Database retains "current data" for less that 6-Months.
 # Sorted data is a directories that are 'year organized sections'. So The
@@ -125,11 +83,8 @@ then
   LastYear=$((ThisYear-1))
 fi
 
-if [ ${BeNoisy} -ne 0 ]
-then
-  echo ${ThisYear}
-  echo ${LastYear}
-fi
+echo ${ThisYear}
+echo ${LastYear}
 
 ThisMonthDay="${ThisMonth}${ThisDay}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,35 +103,27 @@ do
  then
     #echo "This YMDH" = ${ThisMonthDay}
     #echo "Processing ${TheFile} [...]"
-#    echo "GPS Serial Number = ${GpsSerialNum}"
+    echo "GPS Serial Number = ${GpsSerialNum}"
     
     #Get the MonthDay field from the GPS file
     FileMonthDay=`echo ${TheFile} | cut -d. -f1|cut -d_ -f2`
+    echo "FileMonthDay = ${FileMonthDay}"
+    
+ 
+    
+    
+    
+    echo ${TheFile}
     FileHour=`echo ${TheFile} | cut -d. -f1|cut -d_ -f4`
-#    echo "FileMonthDay = ${FileMonthDay}"
+    echo "FileHour = ${FileHour}"
     
-    if [[ ${FileMonthDay} < "0700" ]]
-    then 
-        FileYearMonthDay="${ThisYear}${FileMonthDay}"
-    else
-        FileYearMonthDay="${LastYear}${FileMonthDay}"
-    fi
+    FileTimeStamp="${FileMonthDay}${FileHour}"
+    echo "FileTimeStamp = ${FileTimeStamp}"  
     
-    FileTimeStamp="${FileYearMonthDay}${FileHour}"
-#   echo "FileTimeStamp = ${FileTimeStamp} ${S_YYMMDDHH} ... ${E_YYMMDDHH}"
-    
-    if [[ ${FileTimeStamp} -ge ${S_YYMMDDHH} ]]
-    then
-      if [[ ${FileTimeStamp} -le ${E_YYMMDDHH} ]]
-      then
-	  cp $f ${GpsDestFilePath}
-#	  echo "Accepted File ==================================================="
-      fi
-    fi
-    
-    
-      #exit 9  
-  fi
+      
+      exit 9
+  
+ fi
   
   
 #  ${SHL_PATH}/mvFile2Folder_1x1b.sh ${f} ${TrailsDbRoot}
